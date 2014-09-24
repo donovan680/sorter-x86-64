@@ -4,6 +4,7 @@
 # The function is register save
 ###############################################################################
 
+.globl print_number
 .type print_number, @function
 print_number:
     push    %rbp
@@ -63,6 +64,7 @@ print_loop:
 # The function is not register save
 ###############################################################################
 
+.global print_string
 .type print_string, @function
 print_string:
     push    %rbp

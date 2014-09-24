@@ -9,6 +9,7 @@
 # The function returns the beginning of the reserved heap space in rax
 ###############################################################################
 
+.global alloc_mem
 .type alloc_mem, @function
 alloc_mem:
     push    %rbp

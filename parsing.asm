@@ -8,6 +8,7 @@
 # The function is not register save!
 ###############################################################################
 
+.global get_number_count
 .type get_number_count, @function
 get_number_count:
     push    %rbp
@@ -45,6 +46,7 @@ end_counting:
 # The function is not register save!
 ###############################################################################
 
+.global parse_number_buffer
 .type parse_number_buffer, @function
 parse_number_buffer:
     push    %rbp

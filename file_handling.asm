@@ -9,6 +9,7 @@ file_stat:  .space 144  #Size of the fstat struct
 #
 # The function is not register save!
 ###############################################################################
+.global get_file_size
 .type get_file_size, @function
 get_file_size:
     push    %rbp

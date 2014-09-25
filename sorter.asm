@@ -117,6 +117,25 @@ maybeDone:
     je sort
 
 done:
+    mov numberBuffer, rsi
+    mov numberCount, rcx
+    xor rdx, rdx
+
+printNumbers:
+    push rsi
+    push rdx
+    push rcx
+    push (rsi, rdx, 8)
+    call print_number
+    pop rcx
+    pop rcx
+    pop rdx
+    pop rsi
+
+    inc rdx
+    cmp rcx, rdx
+    jl printNumbers
+
     mov $60, rax
     mov $0, rdi
     syscall

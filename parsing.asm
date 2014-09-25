@@ -1,9 +1,9 @@
 .section .text
 
 ###############################################################################
-# This function returns the amount of numbers in the given buffer in rax. First
-# parameter is the address of the buffer, second parameter is the size of the
-# buffer
+# This function returns the amount of numbers in the given buffer in rax.
+# First parameter is the address of the buffer, second parameter is the
+# size of the buffer
 #
 # The function is not register save!
 ###############################################################################

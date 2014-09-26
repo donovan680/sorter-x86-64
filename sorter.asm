@@ -75,54 +75,34 @@ _start:
     call parse_number_buffer
     # Numbers have now been parsed and stored in numberBuffer
 
-    xor rax, rax
-    xor rbx, rbx
-    xor rsi, rsi
-    xor rdi, rdi
-    # Counters
-    xor r9, r9
-    xor r10, r10
-    # Flag that indicates swaps have been done
-    xor r11, r11
-    # rsi points to number buffer
-    mov numberCount, rcx
-    mov numberBuffer, rsi
+    push numberCount
+    push (numberBuffer)
+    call printNumbers
 
-sort:
-    inc r9
-    cmp r9, rcx
-    je maybeDone
-    # Move current number into rax
-    mov (rsi, r9, 8), rax
-    # Move adjacent number into rdx
-    mov r9, r10
-    dec r10
-    mov (rsi, r10, 8), rdx
-    cmp rax, rdx
-    jg swap
-    jmp sort
+exit:
+    mov $60, rax
+    mov $0, rdi
+    syscall
 
-swap:
-    # We're swapping values
-    mov $1, r11
-    xchg rax, rdx
-    mov rax, (rsi, r9, 8)
-    mov rdx, (rsi, r10, 8)
-    jmp sort
+error:
+    lea errorString, rax
+    push rax
+    call print_string
+    jmp exit
 
-maybeDone:
-    xor r9, r9
-    cmp $0, r11
-    je done
-    xor r11, r11
-    je sort
-
-done:
-    mov numberBuffer, rsi
-    mov numberCount, rcx
-    xor rdx, rdx
-
+# printNumbers -- prints a buffer of 8 byte numbers, each on a newline
+# parameters: buffer address on the stack
+#             number count on the stack
+# push arguments in reverse order.
+# Clobbers registers
+.type printNumbers, @function
 printNumbers:
+    push rbp
+    mov rsp, rbp
+    mov 16(rbp), rsi
+    mov 24(rbp), rcx
+    xor rdx, rdx
+loop:
     push rsi
     push rdx
     push rcx
@@ -135,16 +115,7 @@ printNumbers:
 
     inc rdx
     cmp rcx, rdx
-    jl printNumbers
-
-exit:
-    mov $60, rax
-    mov $0, rdi
-    syscall
-
-error:
-    lea errorString, rax
-    push rax
-    call print_string
-    jmp exit
+    jl loop
+    leave
+    ret
 

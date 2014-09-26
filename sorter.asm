@@ -87,6 +87,7 @@ _start:
     # rsi points to number buffer
     mov numberCount, rcx
     mov numberBuffer, rsi
+
 sort:
     inc r9
     cmp r9, rcx
@@ -136,6 +137,7 @@ printNumbers:
     cmp rcx, rdx
     jl printNumbers
 
+exit:
     mov $60, rax
     mov $0, rdi
     syscall
@@ -144,5 +146,5 @@ error:
     lea errorString, rax
     push rax
     call print_string
-    jmp done
+    jmp exit
 

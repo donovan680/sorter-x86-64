@@ -75,17 +75,17 @@ _start:
     call parse_number_buffer
     # Numbers have now been parsed and stored in numberBuffer
 
-    mov $1, rcx
+    mov $1, r13
 
 sortLoop:
-    push rcx
+    push r13
     push numberCount
     push numberBuffer
     call countingSort
-    inc rcx
+    inc r13
     # TODO: this shouldn't be hardcoded
     # This is num digits we want to sort
-    cmp $10, rcx
+    cmp $11, r13
     jne sortLoop
 
     push numberCount

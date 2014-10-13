@@ -135,11 +135,15 @@ countingSort:
     mov rsp, r15
 
 
+    # Allocate space for copy buffer
     imul $8, rcx, r14
+    push rcx
     push r14
     call alloc_mem
-    mov r14, rax
-
+    mov rax, r14
+    # TODO: Save rcx better here
+    pop rcx
+    pop rcx
 
     # Set all counts to zero
 zeroLoop:
@@ -180,9 +184,9 @@ getdigitloop:
 
     inc r9
     cmp rcx, r9
-    jl countLoop
-    # Done counting digits
+    jne countLoop
 
+    # Done counting digits
     # Total
     xor rax, rax
     # Old count

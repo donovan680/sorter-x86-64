@@ -67,6 +67,7 @@ _start:
     push r9
     call alloc_mem
     # Store address
+    # TODO: redundant?
     mov rax, (numberBuffer)
 
     push rax
@@ -75,6 +76,7 @@ _start:
     call parse_number_buffer
     # Numbers have now been parsed and stored in numberBuffer
 
+    # TODO: Reduce register usage
     mov $1, r13
 
 sortLoop:
@@ -120,20 +122,13 @@ countingSort:
     # power of 10
     mov 32(rbp), rbx
     # Counter for zero loop
-    xor r9, r9
 
     # Space for count buffer
+    # TODO: Maybe not allocate 80 bytes
+    # for 10 single digit numbers.
     # rdi is count buffer
     sub $80, rsp
     mov rsp, rdi
-
-    # Space for digit buffer
-    # TODO: Maybe not allocate 80 bytes
-    # for 10 single digit numbers.
-    # r15 is digit buffer
-    sub $80, rsp
-    mov rsp, r15
-
 
     # Allocate space for copy buffer
     imul $8, rcx, r14
@@ -145,7 +140,16 @@ countingSort:
     pop rcx
     pop rcx
 
+    # Allocate space for key/digit buffer
+    push rcx
+    push numberCount
+    call alloc_mem
+    mov rax, r15
+    pop rcx
+    pop rcx
+
     # Set all counts to zero
+    xor r9, r9
 zeroLoop:
     movq $0, (rdi, r9, 8)
     inc r9
@@ -180,7 +184,7 @@ getdigitloop:
     mov r10, (rdi, rdx, 8)
     # Store digit (key) in key buffer
     # for that number
-    mov rdx, (r15, r9, 8)
+    mov rdx, (r15, r9)
 
     inc r9
     cmp rcx, r9
@@ -212,7 +216,7 @@ calculateIndex:
 outputLoop:
     #output[count[key(x)]] = x
     # rax = key(x)
-    mov (r15, r9, 8), rax
+    mov (r15, r9), al
 
     # rbx = count[key(x)]
     mov (rdi, rax, 8), rbx
@@ -233,13 +237,14 @@ outputLoop:
 
     xor r9, r9
 
+    # Store size of buffer in r11
+    imul $8, rcx, r11
 copyBack:
     # SIMD, baby
     movdqa (r14, r9), xmm1
     movdqa xmm1, (rsi, r9)
     add $16, r9
-    # TODO: This shouldn't be hardcoded
-    cmp $80, r9
+    cmp r11, r9
     jne copyBack
 
     leave

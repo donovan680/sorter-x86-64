@@ -238,12 +238,10 @@ outputLoop:
     imul $8, rcx, r11
 copyBack:
     # SIMD, baby
-    mov (r14, r9, 8), rax
-    mov rax, (rsi, r9, 8)
-    #movdqa (r14, r9), xmm1
-    #movdqa xmm1, (rsi, r9)
-    inc r9
-    cmp rcx, r9
+    movdqa (r14, r9), xmm1
+    movdqa xmm1, (rsi, r9)
+    add $16, r9
+    cmp r11, r9
     jne copyBack
 
     leave

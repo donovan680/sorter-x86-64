@@ -9,6 +9,8 @@ numberBuffer:
     .space 8
 numberCount:
     .space 8
+copyBuffer:
+    .space 8
 errorString:
     .string "Unable to open file.\n"
 
@@ -67,10 +69,12 @@ _start:
     push r9
     call alloc_mem
     # Store address
-    # TODO: redundant?
     mov rax, (numberBuffer)
+    # Allocate space for copy buffer *ONCE*
+    call alloc_mem
+    mov rax, (copyBuffer)
 
-    push rax
+    push numberBuffer
     push fileSize
     push buffer
     call parse_number_buffer
@@ -93,7 +97,6 @@ sortLoop:
     push numberCount
     push numberBuffer
     call printNumbers
-
 
 exit:
     mov $60, rax
@@ -130,15 +133,8 @@ countingSort:
     sub $80, rsp
     mov rsp, rdi
 
-    # Allocate space for copy buffer
-    imul $8, rcx, r14
-    push rcx
-    push r14
-    call alloc_mem
-    mov rax, r14
-    # TODO: Save rcx better here
-    pop rcx
-    pop rcx
+    # Use previously allocated copy buffer
+    mov (copyBuffer), r14
 
     # Allocate space for key/digit buffer
     push rcx

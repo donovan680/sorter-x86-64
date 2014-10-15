@@ -94,9 +94,9 @@ sortLoop:
     cmp $11, r13
     jne sortLoop
 
-    push numberCount
-    push numberBuffer
-    call printNumbers
+    #push numberCount
+    #push numberBuffer
+    #call printNumbers
 
 exit:
     mov $60, rax

@@ -11,6 +11,8 @@ numberCount:
     .space 8
 copyBuffer:
     .space 8
+keyBuffer:
+    .space 8
 errorString:
     .string "Unable to open file.\n"
 
@@ -73,6 +75,11 @@ _start:
     # Allocate space for copy buffer *ONCE*
     call alloc_mem
     mov rax, (copyBuffer)
+
+    # Allocate space for key buffer *ONCE*
+    push numberCount
+    call alloc_mem
+    mov rax, (keyBuffer)
 
     push numberBuffer
     push fileSize
@@ -137,12 +144,7 @@ countingSort:
     mov (copyBuffer), r14
 
     # Allocate space for key/digit buffer
-    push rcx
-    push numberCount
-    call alloc_mem
-    mov rax, r15
-    pop rcx
-    pop rcx
+    mov (keyBuffer), r15
 
     # Set all counts to zero
     xor r9, r9

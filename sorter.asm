@@ -88,7 +88,7 @@ _start:
     # Numbers have now been parsed and stored in numberBuffer
 
     # TODO: Reduce register usage
-    mov $1, r13
+    mov $0, r13
 
 sortLoop:
     push r13
@@ -96,9 +96,8 @@ sortLoop:
     push numberBuffer
     call countingSort
     inc r13
-    # TODO: this shouldn't be hardcoded
-    # This is num digits we want to sort
-    cmp $11, r13
+    # We have a maximum length of 8 bytes
+    cmp $8, r13
     jne sortLoop
 
     #push numberCount
@@ -129,15 +128,12 @@ countingSort:
     mov 16(rbp), rsi
     # num count
     mov 24(rbp), rcx
-    # power of 10
+    # byte idx
     mov 32(rbp), rbx
-    # Counter for zero loop
 
-    # Space for count buffer
-    # TODO: Maybe not allocate 80 bytes
-    # for 10 single digit numbers.
-    # rdi is count buffer
-    sub $80, rsp
+    # TODO: Maybe use one buffer every time
+    # rdi is count buffer / bucket
+    sub $1024, rsp
     mov rsp, rdi
 
     # Use previously allocated copy buffer
@@ -149,40 +145,38 @@ countingSort:
     # Set all counts to zero
     xor r9, r9
 zeroLoop:
+    # TODO: Use SIMD to zero
     movq $0, (rdi, r9, 8)
     inc r9
-    cmp $10, r9
+    cmp $128, r9
     jne zeroLoop
 
     # r9 is index for current number
     xor r9, r9
 
-    # Grab the digits, count them
+    # Grab the byte, count them
 countLoop:
+    # Store rcx
+    push rcx
     mov (rsi, r9, 8), rax
-    # Store old value of rbx
-    push rbx
+    mov rbx, rdx
+    imul $8, rdx, rcx
+    # r11 stores mask
+    movq $0xff, r11
+    shl cl, r11
+    and r11, rax
+    shr cl, rax
+    # Restore rcx
+    pop rcx
 
-    # (number / base^(n-1)) % base
-getdigitloop:
-    xor rdx, rdx
-    mov $10, r12
-    div r12
-    dec rbx
-    cmp $0, rbx
-    jne getdigitloop
-
-    # Restore it
-    pop rbx
-
-    # Remainder is now in rdx
+    # Current byte is now in rax,
     # use it as index for bucket
-    mov (rdi, rdx, 8), r10
+    xor r10, r10
+    mov (rdi, rax, 4), r10w
     inc r10
-    mov r10, (rdi, rdx, 8)
-    # Store digit (key) in key buffer
+    mov r10w, (rdi, rax, 4)
     # for that number
-    mov dl, (r15, r9)
+    mov al, (r15, r9)
 
     inc r9
     cmp rcx, r9
@@ -198,14 +192,15 @@ getdigitloop:
 
 calculateIndex:
     # oldCount = count[i]
-    mov (rdi, r12, 8), rbx
+    xor rbx, rbx
+    mov (rdi, r12, 4), ebx
     # count[i] = total
-    mov rax, (rdi, r12, 8)
+    mov eax, (rdi, r12, 4)
     # total += oldCount
     add rbx, rax
     # i ++
     inc r12
-    cmp $10, r12
+    cmp $256, r12
     jne calculateIndex
 
     # Index for current number
@@ -218,7 +213,8 @@ outputLoop:
     mov (r15, r9), al
 
     # rbx = count[key(x)]
-    mov (rdi, rax, 8), rbx
+    xor ebx, ebx
+    mov (rdi, rax, 4), ebx
 
     # r11 = x
     mov (rsi, r9, 8), r11
@@ -228,7 +224,7 @@ outputLoop:
 
     #count[key(x)] += 1
     inc rbx
-    mov rbx, (rdi, rax, 8)
+    mov ebx, (rdi, rax, 4)
 
     inc r9
     cmp r9, rcx

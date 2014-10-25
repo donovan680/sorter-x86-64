@@ -60,6 +60,9 @@ parse_number_buffer:
     xor     %r12,%r12           #current number
 
 number_parsing_loop:
+    # Fix for off-by-one error
+    cmp     %r9, 24(%rbp)
+    je      store_last_number
     xor     %rax,%rax
     mov     (%r8,%r9),%al       #read byte
     cmp     $0xA,%rax           #Is the number finished

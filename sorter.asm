@@ -100,9 +100,11 @@ sortLoop:
     cmp $8, r13
     jne sortLoop
 
-    #push numberCount
-    #push numberBuffer
-    #call printNumbers
+    push fileSize
+    push buffer
+    push numberCount
+    push numberBuffer
+    call printNumbers
 
 exit:
     mov $60, rax
@@ -255,23 +257,45 @@ copyBack:
 printNumbers:
     push rbp
     mov rsp, rbp
+    # Number buffer
     mov 16(rbp), rsi
+    # Number count
     mov 24(rbp), rcx
-    xor rdx, rdx
-loop:
-    push rsi
-    push rdx
-    push rcx
-    push (rsi, rdx, 8)
-    call print_number
-    pop rcx
-    pop rcx
-    pop rdx
-    pop rsi
+    # Input buffer
+    mov 32(rbp), rdi
+    # Input buffer size
+    mov 40(rbp), r10
+    sub $2, r10
+    dec rcx
 
-    inc rdx
-    cmp rcx, rdx
-    jl loop
+convertLoop:
+    mov (rsi, rcx, 8), rax
+    cmp $1631212365, rax
+    jne digitLoop
+    int $3
+
+digitLoop:
+    xor rdx, rdx
+    mov $10, rbx
+    div rbx
+    add $0x30, rdx
+    movb dl, (rdi, r10)
+    cmp $0, rax
+    je numberDone
+    dec r10
+    jmp digitLoop
+
+numberDone:
+    dec rcx
+    cmp $0, rcx
+    jl doneConverting
+    dec r10
+    movb $10, (rdi, r10)
+    dec r10
+    jmp convertLoop
+
+doneConverting:
+    push rdi
+    call print_string
     leave
     ret
-

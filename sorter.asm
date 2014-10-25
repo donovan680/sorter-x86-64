@@ -161,6 +161,7 @@ countLoop:
     # Store rcx
     push rcx
     mov (rsi, r9, 8), rax
+    # TODO: Why am I moving rbx into rdx?
     mov rbx, rdx
     imul $8, rdx, rcx
     # r11 stores mask
@@ -174,9 +175,9 @@ countLoop:
     # Current byte is now in rax,
     # use it as index for bucket
     xor r10, r10
-    mov (rdi, rax, 4), r10w
+    mov (rdi, rax, 4), r10d
     inc r10
-    mov r10w, (rdi, rax, 4)
+    mov r10d, (rdi, rax, 4)
     # for that number
     mov al, (r15, r9)
 

@@ -50,20 +50,21 @@ _start:
     mov $9, rax
     xor rdi, rdi
     mov (fileSize), rsi
-    # PROT_READ
+    # PROT_READ | PROT_WRITE
     mov $3, rdx
     # MAP_PRIVATE | MAP_POPULATE
     mov $0x8002, r10
     mov fileHandle, r8
     xor r9, r9
     syscall
-
+    # Store buffer
     mov rax, (buffer)
 
     push fileSize
     push buffer
     call get_number_count
 
+    # Store number count
     mov rax, (numberCount)
 
     # Allocate memory for num_count numbers(each number is 8 bytes)
@@ -100,6 +101,10 @@ sortLoop:
     cmp $8, r13
     jne sortLoop
 
+    # Skip printing if program gets more than
+    # one argument
+    cmp $3, (rbp)
+    jge exit
     push fileSize
     push buffer
     push numberCount

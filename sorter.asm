@@ -21,8 +21,9 @@ errorString:
 .att_syntax noprefix
 .type _start, @function
 _start:
+    mov rsp, rbp
     # Filename to rdi
-    mov 16(rsp), rdi
+    mov 16(rbp), rdi
     # sys_open = 2
     mov $2, rax
     # O_RDONLY = 0
@@ -88,7 +89,6 @@ _start:
     call parse_number_buffer
     # Numbers have now been parsed and stored in numberBuffer
 
-    # TODO: Reduce register usage
     mov $0, r13
 
 sortLoop:
@@ -112,6 +112,7 @@ sortLoop:
     call printNumbers
 
 exit:
+
     mov $60, rax
     mov $0, rdi
     syscall
@@ -301,7 +302,10 @@ numberDone:
     jmp convertLoop
 
 doneConverting:
-    push rdi
-    call print_string
+    mov $1, rax
+    mov rdi, rsi
+    mov $1, rdi
+    mov 40(rbp), rdx
+    syscall
     leave
     ret

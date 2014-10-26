@@ -18,9 +18,14 @@ errorString:
 
 .section .text
 .global _start
+# Removes requirement for pesky % sign everywhere
 .att_syntax noprefix
 .type _start, @function
 _start:
+############################################################################
+#                             Reading the file                             #
+############################################################################
+
     mov rsp, rbp
     # Filename to rdi
     mov 16(rbp), rdi
@@ -61,6 +66,9 @@ _start:
     # Store buffer
     mov rax, (buffer)
 
+############################################################################
+#                              Parse the file                              #
+############################################################################
     push fileSize
     push buffer
     call get_number_count
@@ -89,8 +97,11 @@ _start:
     call parse_number_buffer
     # Numbers have now been parsed and stored in numberBuffer
 
-    mov $0, r13
+############################################################################
+#                              Sort the file                               #
+############################################################################
 
+    xor r13, r13
 sortLoop:
     push r13
     push numberCount
@@ -112,7 +123,6 @@ sortLoop:
     call printNumbers
 
 exit:
-
     mov $60, rax
     mov $0, rdi
     syscall
@@ -123,31 +133,34 @@ error:
     call print_string
     jmp exit
 
-# countingSort -- performs counting sort on the given list of numbers
-# parameters:
-#             buffer address on the stack
-#             number count on the stack
-#             power of 10 number designating digit to sort by
+############################################################################
+#                              Counting sort                               #
+############################################################################
+# countingSort -- performs counting sort on
+# parameters, in order they should be pushed:
+#    Byte index to sort by counting from least significant byte
+#    Number count
+#    Number buffer
 .type countingSort, @function
 countingSort:
     push rbp
     mov rsp, rbp
-    # buffer
+    # Buffer
     mov 16(rbp), rsi
-    # num count
+    # Number count
     mov 24(rbp), rcx
-    # byte idx
+    # Which byte we're sorting on, counting from least significant byte
     mov 32(rbp), rbx
 
-    # TODO: Maybe use one buffer every time
-    # rdi is count buffer / bucket
+    # Allocate space on the stack for the bucket / count buffer.
+    # 256 different values * 4 bytes = 1 kilobyte
     sub $1024, rsp
     mov rsp, rdi
 
     # Use previously allocated copy buffer
     mov (copyBuffer), r14
 
-    # Allocate space for key/digit buffer
+    # Use previously allocated key buffer
     mov (keyBuffer), r15
 
     # Set all counts to zero
@@ -159,18 +172,18 @@ zeroLoop:
     cmp $128, r9
     jne zeroLoop
 
+############################################################################
+#                       Count the occurences of keys                       #
+############################################################################
     # r9 is index for current number
     xor r9, r9
-
-    # Grab the byte, count them
 countLoop:
     # Store rcx
     push rcx
     mov (rsi, r9, 8), rax
-    # TODO: Why am I moving rbx into rdx?
-    mov rbx, rdx
-    imul $8, rdx, rcx
-    # r11 stores mask
+    # For some reason, shl/r only works with cl
+    imul $8, rbx, rcx
+    # Get the correct byte using a bitmask
     movq $0xff, r11
     shl cl, r11
     and r11, rax
@@ -184,21 +197,23 @@ countLoop:
     mov (rdi, rax, 4), r10d
     inc r10
     mov r10d, (rdi, rax, 4)
-    # for that number
+
+    # This stores the key so we don't have to calculate it again later
     mov al, (r15, r9)
 
     inc r9
     cmp rcx, r9
     jne countLoop
 
-    # Done counting digits
+############################################################################
+#               Calculate the new positions for the numbers                #
+############################################################################
     # Total
     xor rax, rax
     # Old count
     xor rbx, rbx
     # Counter
     xor r12, r12
-
 calculateIndex:
     # oldCount = count[i]
     xor rbx, rbx
@@ -212,9 +227,11 @@ calculateIndex:
     cmp $256, r12
     jne calculateIndex
 
+############################################################################
+#      Write the numbers to their new positions in the output buffer       #
+############################################################################
     # Index for current number
     xor r9, r9
-
 outputLoop:
     #output[count[key(x)]] = x
     # rax = key(x)
@@ -239,8 +256,10 @@ outputLoop:
     cmp r9, rcx
     jne outputLoop
 
+############################################################################
+#                      Copy back into original buffer                      #
+############################################################################
     xor r9, r9
-
     # Store size of buffer in r11
     imul $8, rcx, r11
 copyBack:
@@ -255,10 +274,11 @@ copyBack:
     ret
 
 # printNumbers -- prints a buffer of 8 byte numbers, each on a newline
-# parameters:
-#             buffer address on the stack
-#             number count on the stack
-# push arguments in reverse order.
+# parameters on stack, in order they should be pushed:
+#    Length of input buffer
+#    Buffer address
+#    Number count in sorted buffer
+#    Address of number bufferj
 # Clobbers registers
 .type printNumbers, @function
 printNumbers:
@@ -277,31 +297,35 @@ printNumbers:
 
 convertLoop:
     mov (rsi, rcx, 8), rax
-    cmp $1631212365, rax
-    jne digitLoop
-    int $3
 
 digitLoop:
+    # Grab digit, convert to ascii
+    # store in correct place
     xor rdx, rdx
     mov $10, rbx
     div rbx
     add $0x30, rdx
     movb dl, (rdi, r10)
+    # If the quotient is zero, the number is done
     cmp $0, rax
     je numberDone
     dec r10
     jmp digitLoop
 
 numberDone:
+    # Point to next number
     dec rcx
+    # Are we done converting all numbers?
     cmp $0, rcx
     jl doneConverting
+    # Nope, write newline, point to next good place
     dec r10
     movb $10, (rdi, r10)
     dec r10
     jmp convertLoop
 
 doneConverting:
+    # Write buffer to stdout
     mov $1, rax
     mov rdi, rsi
     mov $1, rdi

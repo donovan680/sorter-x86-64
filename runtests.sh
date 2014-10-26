@@ -12,8 +12,8 @@ done
 for s in $SIZES; do
     for n in $(seq 1 20); do
         FILENAME="random$s-$n"
-        echo "Sorting $FILENAME"
-        ./sorter $FILENAME $1 > result
+        printf "Sorting $FILENAME: "
+        /usr/bin/time --format %e ./sorter $FILENAME $1 > result
         sort -nc result
     done
 done

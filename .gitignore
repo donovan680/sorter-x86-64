@@ -4,3 +4,6 @@ result
 linux-3.16.4
 *.fls
 *.pdf
+handin
+*.tex
+*.png

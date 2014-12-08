@@ -9,3 +9,4 @@ handin
 *.png
 !graph.png
 *.html
+*.o

@@ -7,3 +7,5 @@ linux-3.16.4
 handin
 *.tex
 *.png
+!graph.png
+*.html

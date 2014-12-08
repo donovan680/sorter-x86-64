@@ -50,11 +50,21 @@ Running `make` will build the program. Running `python testsuite.py -g
 graph.png` will give you a graph like the one above. For additional options
 that can be tweaked, see the output from `python testsuite.py -h`
 
-**Note:** You need python 3 to run the test suite, and GNU binutils for `as`
-and `ld`.
-
+**Note:** You need python 3 to run the test suite, as well as GNU binutils
+for `as` and `ld`.
 
 ## Known limitations & Bugs
+### Before you curse me
+If you are reading this and it angers you beyond comprehension that I am
+audacious enough to think that I have beaten coreutils sort -- relax. I know
+I haven't *beaten* coreutils sort *in general*. I have beaten it for exactly
+the type of input data I have specified.
+
+### Bugs
+Some parts of the code assume that the number of integers in the input file
+is even. Trying to sort files containing an uneven number of integers will
+most likely crash the program, or in the best case scenario, result in
+garbage output.
 
 
 

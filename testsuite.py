@@ -82,6 +82,7 @@ if __name__ == "__main__":
         coreutilsAverages.append(coreutilsSum / numSamples)
         myAverages.append(myTimesSum / numSamples)
 
+    plt.ioff()
     plt.xlabel("Input size")
     plt.ylabel("Time (s)")
     plt.plot(sizes, coreutilsAverages)

@@ -1,10 +1,14 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import argparse
+import random
 import subprocess
 import sys
-sizes = [10, 100, 1000, 5000, 10000, 50000 , 100000, 500000, 1000000]
+import os
 
-#sizes = [100000, 500000, 1000000]
+sizes      = [10, 100, 1000, 5000, 10000, 50000 , 100000, 500000, 1000000]
+numSamples = 20
+maxSize    = 2**64
 
 def generateTestData():
     for s in sizes:
@@ -16,50 +20,71 @@ def generateTestData():
                     r = random.randint(1, maxSize)
                     f.write(bytes(str(r) + "\n", "UTF-8"))
 
-for s in sizes:
-    for t in ["asc", "desc"]:
-        print(t + "_"+ str(s) + "_time: ", end="", flush=True)
-        testfile = "random{}-{}".format(s, t)
-        command = "/usr/bin/time --format %e ./sorter {} > result".format(testfile)
-        if len(sys.argv) > 1:
-            command = "/usr/bin/time --format %e ./sorter {} 0 > result".format(testfile)
-        p = subprocess.Popen(
-                command
-                , shell=True
-                , universal_newlines=True
-                , stderr=subprocess.PIPE
-                )
-        stdout, stderr = p.communicate()
-        time = float(stderr)
-        print(str(time))
-        mcips = int(cmpCount[s]/(time + 0.01))
-        print(t + "_" + str(s) + "_" + "mcips: ", str(mcips))
+def runCommand(cmd, inputfile):
+    cmdTemplate = "/usr/bin/time --format %e {} {} > result"
+    command = cmdTemplate.format(cmd, inputfile)
+    p = subprocess.Popen(
+            command
+            , shell=True
+            , universal_newlines=True
+            , stderr=subprocess.PIPE
+            )
+    stdout, stderr = p.communicate()
+    # Returns runtime
+    return float(stderr)
 
-fig = plt.figure(1, figsize=(9,6))
-ax = fig.add_subplot(111)
-bp = ax.boxplot(allTimes, patch_artist=True)
-for box in bp['boxes']:
-    # change outline color
-    box.set( color='#7570b3', linewidth=2)
-    # change fill color
-    box.set( facecolor = '#1b9e77' )
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run the test suite")
+    # TODO: Add num samples argument
+    parser.add_argument("-g", "--generate-test-data"
+        , help="Generate the test data first."
+        , action="store_true"
+        )
+    parser.add_argument("-n", "--num-samples"
+            , help="Number of samples to try/generate for each file size."
+            , default=20
+            , type=int
+            )
+    parser.add_argument("filename"
+        , help="Name of output graph."
+        )
+    args = parser.parse_args()
 
-ax.set_xticklabels(list(map(lambda n: str(n), sizes)))
+    numSamples = args.num_samples
 
-## Remove top axes and right axes ticks
-ax.get_xaxis().tick_bottom()
-ax.get_yaxis().tick_left()
-plt.xlabel("Input size")
-plt.ylabel("Time (s)")
-if len(sys.argv) > 1:
-    plt.savefig("boxplot0.png", bbox_inches="tight")
-else:
-    plt.savefig("boxplot.png", bbox_inches="tight")
-plt.close()
-plt.xlabel("Input size")
-plt.ylabel("Time (s)")
-plt.plot(sizes, list(map(lambda l: sum(l) / len(l), allTimes)))
-if len(sys.argv) > 1:
-    plt.savefig("graph0.png", bbox_inches="tight")
-else:
-    plt.savefig("graph.png", bbox_inches="tight")
+    if not os.path.isfile("/usr/bin/time"):
+        print("You need /usr/bin/time, not built-in time.")
+        sys.exit(1)
+
+    if not os.path.isfile("./sorter"):
+        print("Please run make first.")
+        sys.exit(1)
+
+    if args.generate_test_data:
+        generateTestData()
+
+    if not os.path.isfile("random10-1"):
+        print("Please run python testsuite.py -g first.")
+        sys.exit(1)
+
+    coreutilsAverages = []
+    myAverages = []
+    for s in sizes:
+        coreutilsSum = 0
+        myTimesSum = 0
+        print("Running tests for size", s, "..")
+        for i in range(numSamples):
+            testfile = "random{}-{}".format(s, i + 1)
+            coreTime = runCommand("sort -n", testfile)
+            myTime = runCommand("./sorter", testfile)
+            coreutilsSum += coreTime
+            myTimesSum += myTime
+        coreutilsAverages.append(coreutilsSum / numSamples)
+        myAverages.append(myTimesSum / numSamples)
+
+    plt.xlabel("Input size")
+    plt.ylabel("Time (s)")
+    plt.plot(sizes, coreutilsAverages)
+    plt.plot(sizes, myAverages)
+    plt.legend(["Coreutils sort", "My sort"], loc="upper left")
+    plt.savefig(args.filename, bbox_inches="tight")

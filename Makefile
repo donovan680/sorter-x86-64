@@ -1,4 +1,4 @@
-DEBUG=--gstabs
+DEBUG=
 
 sorter: sorter.o parsing.o alloc.o file_handling.o print.o sorter.asm
 	ld sorter.o print.o parsing.o alloc.o file_handling.o -o sorter
@@ -7,5 +7,5 @@ sorter: sorter.o parsing.o alloc.o file_handling.o print.o sorter.asm
 	as $(DEBUG) $< -o $@
 
 clean:
-	rm *.o sorter
+	rm -f *.o sorter
 

@@ -1,4 +1,5 @@
 import matplotlib as mpl
+mpl.use("Agg")
 import matplotlib.pyplot as plt
 import argparse
 import random
@@ -82,7 +83,6 @@ if __name__ == "__main__":
         coreutilsAverages.append(coreutilsSum / numSamples)
         myAverages.append(myTimesSum / numSamples)
 
-    mpl.use("Agg")
     plt.xlabel("Input size")
     plt.ylabel("Time (s)")
     plt.plot(sizes, coreutilsAverages)

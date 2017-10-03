@@ -10,3 +10,4 @@ handin
 !graph.png
 *.html
 *.o
+venv
